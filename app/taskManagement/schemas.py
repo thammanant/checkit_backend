@@ -20,9 +20,6 @@ class Task(TaskBase):
 # Base class for Team
 class TeamBase(BaseModel):
     name: str = Field(..., example="Team Name")
-    user_list: Optional[List[str]] = []
-    user_status: List[dict] = []
-    taskList: List[Task] = []
     owner: str = Field(..., example="Owner Name")
     team_id: int
 
@@ -35,18 +32,9 @@ class User(BaseModel):
     email: str = Field(..., example="example@gmail.com")
     name: str = Field(..., example="Name")
     password: str = Field(..., example="Password")
-    taskList: List[Task] = []
-    teamList: List[Team] = []
-    
-# ShowUser is used to show the user in the response
-class ShowUser(User):
-    email: str = Field(..., example="example@gmail.com")
-    name: str = Field(..., example="Name")
-    taskList: List[Task] = []
-    teamList: List[Team] = []
     class Config():
         orm_mode = True
-
+   
 
 class Login(BaseModel):
     email: str

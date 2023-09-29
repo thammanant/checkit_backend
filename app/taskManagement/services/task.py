@@ -4,7 +4,8 @@ from fastapi import HTTPException, status
 from random import randint
 
 # create Task
-def createTask(request: schemas.Task, db: Session):
+def createTask(request: schemas.Task, email: str, db: Session):
+    # Create a new task object
     new_task = models.Task(
         title=request.title,
         description=request.description,
@@ -14,28 +15,47 @@ def createTask(request: schemas.Task, db: Session):
         category=request.category,
         status=request.status,
     )
-    # generate task_id with 6 digits
-    new_task.task_id = randint(100000, 999999)
     
-    # check if task_id already exists if so generate new task_id
-    task = db.query(models.Task).filter(models.Task.task_id == new_task.task_id).first()
-    while task:
-        new_task.task_id = randint(100000, 999999)
-        task = db.query(models.Task).filter(models.Task.task_id == new_task.task_id).first()
-        
+    # Add the new task to the session and commit to the database
     db.add(new_task)
     db.commit()
-    db.refresh(new_task)
-    return new_task
+    
+    # Retrieve the newly generated task_id
+    task_id = new_task.task_id
+    
+    # Associate the task with the user
+    user = db.query(models.User).filter(models.User.email == email).first()
+    if not user:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=f"User with email {email} not found")
+
+    user_task_association = models.UserTask(email=email, task_id=task_id)
+    db.add(user_task_association)
+    db.commit()
+
+    return 'created'
+
 
 # edit Task
 def editTask(task_id: int, request: schemas.Task, db: Session):
-    task = db.query(models.Task).filter(models.Task.task_id == task_id)
-    if not task.first():
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=f"Task with id {task_id} not found")
-    task.update(request)
-    db.commit()
-    return 'updated'
+    try:
+        task = db.query(models.Task).filter(models.Task.task_id == task_id).first()
+        if not task:
+            raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=f"Task with id {task_id} not found")
+
+        # Convert the Pydantic model to a dictionary
+        update_data = request.dict(exclude_unset=True)
+
+        # Update task attributes
+        for key, value in update_data.items():
+            setattr(task, key, value)
+
+        db.commit()
+        return 'updated'
+
+    except Exception as e:
+        db.rollback()  # Rollback changes if an error occurs
+        raise e
+
 
 # delete Task
 def deleteTask(task_id: int, db: Session):
@@ -45,18 +65,6 @@ def deleteTask(task_id: int, db: Session):
     task.delete(synchronize_session=False)
     db.commit()
     return 'deleted'
-
-# append Task to User
-def appendTaskToUser(task_id: int, email: str, db: Session):
-    task = db.query(models.Task).filter(models.Task.task_id == task_id)
-    user = db.query(models.User).filter(models.User.email == email)
-    if not task.first():
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=f"Task with id {task_id} not found")
-    if not user.first():
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=f"User with email {email} not found")
-    user.update({'taskList': user.first().taskList + [task_id]})
-    db.commit()
-    return 'updated'
 
 # append Task to Team
 def appendTaskToTeam(task_id: int, team_id: int, db: Session):
@@ -81,3 +89,23 @@ def removeTaskFromTeam(task_id: int, team_id: int, db: Session):
     team.update({'taskList': [task_id for task_id in team.first().taskList if task_id != task_id]})
     db.commit()
     return 'updated'
+
+# get Task by task_id
+def getTask(task_id: int, db: Session):
+    task = db.query(models.Task).filter(models.Task.task_id == task_id).first()
+    if not task:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=f"Task with id {task_id} not found")
+    return task
+
+# get all Tasks
+def getAllTasks(db: Session):
+    tasks = db.query(models.Task).all()
+    return tasks
+
+# get all Tasks for a User
+def getAllTasksForUser(email: str, db: Session):
+    user = db.query(models.User).filter(models.User.email == email).first()
+    if not user:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=f"User with email {email} not found")
+    tasks = db.query(models.Task).join(models.UserTask).filter(models.UserTask.email == email).all()
+    return tasks

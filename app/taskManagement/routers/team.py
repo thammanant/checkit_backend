@@ -8,7 +8,7 @@ router = APIRouter(
     tags=['Teams']
 )
 
-get_db = database.get_db
+get_db = database.getDB
 
 # Team/create
 # create Team and set Owner of Team and append Team to User

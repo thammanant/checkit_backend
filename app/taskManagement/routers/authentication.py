@@ -10,11 +10,11 @@ router = APIRouter(tags=['Authentication'])
 # validate user
 @router.post('/login')
 def login(request: OAuth2PasswordRequestForm = Depends(), db: Session = Depends(database.getDB)):
-    user = db.query(models.User).filter(models.User.email == request.email).first()
+    user = db.query(models.User).filter(models.User.email == request.username).first()
     if not user:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=f'Invalid Credentials')
     
-    if not Encrypting.checkEncryptedPassword(request.password, user.password):
+    if not Encrypting.checkEncryptedPassword(user.password,request.password):
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=f'Incorrect password')
     
     access_token = token.createAccessToken(data={"sub": user.email})
