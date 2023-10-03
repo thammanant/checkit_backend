@@ -50,11 +50,24 @@ def editUser(email: str, request: schemas.User, db: Session):
 
 # delete User
 def deleteUser(email: str, db: Session):
-    user = db.query(models.User).filter(models.User.email == email)
-    if not user.first():
+    # Get the user and associated user_task and team_user associations
+    user = db.query(models.User).filter(models.User.email == email).first()
+    if not user:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=f"User with email {email} not found")
-    user.delete(synchronize_session=False)
+    
+    # Delete associated user_task associations
+    db.query(models.UserTask).filter(models.UserTask.email == email).delete(synchronize_session=False)
+    
+    # Delete associated team_user associations
+    db.query(models.TeamUser).filter(models.TeamUser.email == email).delete(synchronize_session=False)
+    
+    # Delete associated team_user_status associations
+    db.query(models.TeamUserStatus).filter(models.TeamUserStatus.email == email).delete(synchronize_session=False)
+    
+    # Delete the user
+    db.delete(user)
     db.commit()
+    
     return 'deleted'
 
 

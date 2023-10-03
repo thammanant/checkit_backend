@@ -25,7 +25,6 @@ class Task(Base):
     status = Column(String)
 
     users = relationship('User', secondary='user_tasks', back_populates='tasks')
-    categories = relationship('TaskCategory', back_populates='task')
     teams = relationship('TeamTask', back_populates='task')
 
 class Team(Base):
@@ -44,13 +43,6 @@ class UserTask(Base):
     email = Column(String, ForeignKey("users.email"), primary_key=True, index=True)
     task_id = Column(Integer, ForeignKey("tasks.task_id"), primary_key=True, index=True)
 
-class TaskCategory(Base):
-    __tablename__ = "task_categories"
-
-    task_id = Column(Integer, ForeignKey("tasks.task_id"), primary_key=True, index=True)
-    category = Column(String, primary_key=True, index=True)
-
-    task = relationship('Task', back_populates='categories')
 
 class TeamUserStatus(Base):
     __tablename__ = "team_userstatus"

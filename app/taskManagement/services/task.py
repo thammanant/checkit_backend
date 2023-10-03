@@ -1,7 +1,6 @@
 from sqlalchemy.orm import Session
 from taskManagement import models, schemas
 from fastapi import HTTPException, status
-from random import randint
 
 # create Task
 def createTask(request: schemas.Task, email: str, db: Session):
@@ -59,11 +58,22 @@ def editTask(task_id: int, request: schemas.Task, db: Session):
 
 # delete Task
 def deleteTask(task_id: int, db: Session):
-    task = db.query(models.Task).filter(models.Task.task_id == task_id)
-    if not task.first():
+    # Get the task and associated user_task associations
+    task = db.query(models.Task).filter(models.Task.task_id == task_id).first()
+    if not task:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=f"Task with id {task_id} not found")
-    task.delete(synchronize_session=False)
+    
+    # Delete associated user_task associations
+    db.query(models.UserTask).filter(models.UserTask.task_id == task_id).delete(synchronize_session=False)
+    
+    # Delete associated team_task associations
+    db.query(models.TeamTask).filter(models.TeamTask.task_id == task_id).delete(synchronize_session=False)
+
+    
+    # Delete the task
+    db.delete(task)
     db.commit()
+    
     return 'deleted'
 
 # append Task to Team
