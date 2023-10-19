@@ -70,6 +70,9 @@ def getAllTasksForTeam(team_id: int, db: Session = Depends(get_db)):
 def getAllUsersForTeam(team_id: int, db: Session = Depends(get_db)):
     return team.getAllUsersForTeam(team_id, db)
 
-# Team/getTeamUsersStatus
-# TODO
+# Team/inviteUser
+# invite User to Team using query parameters
+@router.post("/inviteUser", status_code=status.HTTP_201_CREATED)
+def sendEmailInvitation(email: str, team_id: int, db: Session = Depends(get_db)):
+    return team.sendEmailInvitation(email, team_id, db)
 
