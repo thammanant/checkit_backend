@@ -95,5 +95,5 @@ def getTeamPendingStatus(email: str, db: Session):
 
     # get all teams of user
     teams = db.query(models.Team).join(models.TeamUserStatus).filter(models.TeamUserStatus.email == email).filter(
-        models.TeamUserStatus.status == 'pending').all()
+        models.TeamUserStatus.user_status == 'pending').all()
     return teams

@@ -201,13 +201,15 @@ def getAllTasksForTeam(team_id: int, db: Session):
     return tasks
 
 
-# get all Users for a Team
+# get all Users for a Team with their status
 def getAllUsersForTeam(team_id: int, db: Session):
     team = db.query(models.Team).filter(models.Team.team_id == team_id).first()
     if not team:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=f"Team with id {team_id} not found")
-    users = db.query(models.User).join(models.TeamUser).filter(models.TeamUser.team_id == team_id).all()
-    return users
+
+    user_status = db.query(models.TeamUserStatus).filter(models.TeamUserStatus.team_id == team_id).all()
+
+    return user_status
 
 # sent email invitation
 def sendEmailInvitation(email: str, team_id: int, db: Session):

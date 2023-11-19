@@ -45,7 +45,7 @@ class UserTask(Base):
 
 
 class TeamUserStatus(Base):
-    __tablename__ = "team_userstatus"
+    __tablename__ = "team_user_status"
 
     team_id = Column(Integer, ForeignKey("teams.team_id"), primary_key=True, index=True)
     email = Column(String, ForeignKey("users.email"), primary_key=True, index=True)
