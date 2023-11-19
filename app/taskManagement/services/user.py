@@ -3,6 +3,7 @@ from taskManagement import models, schemas
 from fastapi import HTTPException, status
 from taskManagement.encrypting import Encrypting
 
+
 # create User
 def createUser(request: schemas.User, db: Session):
     new_user = models.User(
@@ -19,12 +20,14 @@ def createUser(request: schemas.User, db: Session):
     db.refresh(new_user)
     return new_user
 
+
 # get User by email
 def getUserByEmail(email: str, db: Session):
     user = db.query(models.User).filter(models.User.email == email).first()
     if not user:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=f"User with email {email} not found")
     return user
+
 
 # edit User
 def editUser(email: str, request: schemas.User, db: Session):
@@ -54,20 +57,43 @@ def deleteUser(email: str, db: Session):
     user = db.query(models.User).filter(models.User.email == email).first()
     if not user:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=f"User with email {email} not found")
-    
+
     # Delete associated user_task associations
     db.query(models.UserTask).filter(models.UserTask.email == email).delete(synchronize_session=False)
-    
+
     # Delete associated team_user associations
     db.query(models.TeamUser).filter(models.TeamUser.email == email).delete(synchronize_session=False)
-    
+
     # Delete associated team_user_status associations
     db.query(models.TeamUserStatus).filter(models.TeamUserStatus.email == email).delete(synchronize_session=False)
-    
+
     # Delete the user
     db.delete(user)
     db.commit()
-    
+
     return 'deleted'
 
 
+# get all teams of a user
+def getTeamsOfUser(email: str, db: Session):
+    # check if user exists
+    user = db.query(models.User).filter(models.User.email == email).first()
+    if not user:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=f"User with email {email} not found")
+
+    # get all teams of user
+    teams = db.query(models.Team).join(models.TeamUser).filter(models.TeamUser.email == email).all()
+    return teams
+
+
+# get all team pending status, return Team that have user as pending
+def getTeamPendingStatus(email: str, db: Session):
+    # check if user exists
+    user = db.query(models.User).filter(models.User.email == email).first()
+    if not user:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=f"User with email {email} not found")
+
+    # get all teams of user
+    teams = db.query(models.Team).join(models.TeamUserStatus).filter(models.TeamUserStatus.email == email).filter(
+        models.TeamUserStatus.user_status == 'pending').all()
+    return teams

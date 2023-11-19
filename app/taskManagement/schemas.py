@@ -26,6 +26,7 @@ class TeamBase(BaseModel):
 class Team(TeamBase):
     class Config():
         orm_mode = True
+        from_attributes = True
 
 # Base class for User
 class User(BaseModel):

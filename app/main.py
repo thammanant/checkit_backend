@@ -1,5 +1,5 @@
 from fastapi import FastAPI
-from taskManagement import  models
+from taskManagement import models
 from taskManagement.database import engine
 from taskManagement.routers import user, task, team, authentication
 
